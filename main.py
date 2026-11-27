@@ -3,11 +3,12 @@
 
 Stdlib only. Draws entry.png (1024x1024) with a hand-built 5x7 bitmap
 font. Fully deterministic: no network, no randomness, no timestamps.
-Run: python3 main.py  (writes entry.png next to main.py)
+Run: python3 main.py [output-dir]  (writes entry.png to argv[1], else $MAKEFUN_OUTPUT_DIR, else next to main.py)
 """
 import math
 import os
 import struct
+import sys
 import zlib
 
 W, H = 1024, 1024
@@ -319,9 +320,23 @@ def build():
     return cv.png_bytes()
 
 
+def output_dir():
+    # argv[1] wins, then MAKEFUN_OUTPUT_DIR, then main.py's own directory.
+    # The grading sandbox mounts main.py's directory read-only, so writing
+    # entry.png next to main.py fails there; the env var points at a
+    # writable directory (this is how the round 1 entry passed).
+    if len(sys.argv) > 1 and sys.argv[1]:
+        return sys.argv[1]
+    env = os.environ.get("MAKEFUN_OUTPUT_DIR")
+    if env:
+        return env
+    return os.path.dirname(os.path.abspath(__file__))
+
+
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(here, "entry.png"), "wb") as f:
+    out_dir = output_dir()
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "entry.png"), "wb") as f:
         f.write(build())
 
 
