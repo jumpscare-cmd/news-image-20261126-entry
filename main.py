@@ -95,6 +95,17 @@ def wrap(text, scale, max_w):
             cur = w
     if cur:
         lines.append(cur)
+    # Avoid stranding a lone word on the last line: pull the previous
+    # line's final word down when the pair still fits the line width.
+    # (Greedy wrapping left e.g. "KIM VOWS MORE NUCLEAR / ARMS" and
+    # "LEBANON PLANS SECOND / AIRPORT" with a one-word second line.)
+    if len(lines) >= 2 and " " not in lines[-1]:
+        prev = lines[-2].rsplit(" ", 1)
+        if len(prev) == 2:
+            moved = prev[1] + " " + lines[-1]
+            if len(moved) <= per:
+                lines[-2] = prev[0]
+                lines[-1] = moved
     return lines
 
 
